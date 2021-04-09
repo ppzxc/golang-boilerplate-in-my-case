@@ -1,0 +1,7 @@
+database:
+  type: mariadb
+  ip: localhost
+  port: 3306
+  instance: test
+  username: ppzxc
+  password: test
