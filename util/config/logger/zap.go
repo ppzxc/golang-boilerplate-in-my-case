@@ -63,20 +63,18 @@ func Init(logLevel string, fileName string, useLogFile bool, dsn string) error {
 	}
 
 	encoder := zapcore.NewConsoleEncoder(encoderConfig)
-
-	hook := lumberjack.Logger{
-		Filename:   fileName,
-		MaxSize:    MAX_SIZE,
-		MaxBackups: MAX_BACKUPS,
-		MaxAge:     MAX_AGE,
-		Compress:   true,
-	}
-
 	core := zapcore.NewNopCore()
+
 	if useLogFile {
 		core = zapcore.NewCore(
 			encoder,
-			zapcore.NewMultiWriteSyncer(zapcore.AddSync(&hook)),
+			zapcore.NewMultiWriteSyncer(zapcore.AddSync(&lumberjack.Logger{
+				Filename:   fileName,
+				MaxSize:    MAX_SIZE,
+				MaxBackups: MAX_BACKUPS,
+				MaxAge:     MAX_AGE,
+				Compress:   true,
+			})),
 			zap.NewAtomicLevelAt(level),
 		)
 	} else {

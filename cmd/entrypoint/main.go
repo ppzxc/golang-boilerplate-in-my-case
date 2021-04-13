@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"go-arch/proc"
-	"go-arch/util/config/logger"
-	"go-arch/util/config/yml"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/proc"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/logger"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/yml"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -49,27 +49,32 @@ func main() {
 		fmt.Println("-c config file path is invalid")
 		os.Exit(-1)
 	}
+	fmt.Printf("CONFIG FILE PATH : %+v\r\n", *configFilePath)
 
 	// validation, log level
 	if len(*logLevel) <= 0 {
 		fmt.Println("-l loglevel is not set")
 		os.Exit(-1)
 	}
+	fmt.Printf("LOG LEVEL : %+v\r\n", *logLevel)
 
 	// validation, sentry dsn
 	if len(*dsn) <= 0 {
 		fmt.Println("-d sentry dsn is not set")
 		os.Exit(-1)
 	}
+	fmt.Printf("SENTRY DSN : %+v\r\n", *dsn)
+	fmt.Printf("LOG FILE PATH : %+v\r\n", *logFilePath)
+	fmt.Printf("USE LOG FILE : %+v\r\n", len(*logFilePath) > 0)
 
 	// init, logger
-	if err := logger.Init(*logLevel, *logFilePath, len(*logFilePath) <= 0, *dsn); err != nil {
+	if err := logger.Init(*logLevel, *logFilePath, len(*logFilePath) > 0, *dsn); err != nil {
 		zap.L().Error("logger init error occurred", zap.Error(err))
 		os.Exit(-1)
 	}
 
 	// init, config file
-	config, err := yml.Read(*configFilePath, *logLevel, *logFilePath, len(*logFilePath) <= 0, *dsn)
+	config, err := yml.Read(*configFilePath, *logLevel, *logFilePath, len(*logFilePath) < 1, *dsn)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

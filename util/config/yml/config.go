@@ -3,9 +3,9 @@ package yml
 import (
 	"errors"
 	"github.com/fsnotify/fsnotify"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/logger"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/util/err"
 	"github.com/spf13/viper"
-	"go-arch/util/config/logger"
-	"go-arch/util/err"
 	"go.uber.org/zap"
 )
 
@@ -40,18 +40,20 @@ func Read(configFilePath string, logLevel string, fileName string, useLogFile bo
 
 func validateConfig() (*Config, error) {
 	config := Config{}
+
+	// database
 	if len(viper.GetString("database.type")) <= 0 {
 		return nil, errors.New("missing database.type")
 	}
 	config.DataBase.Type = viper.GetString("database.type")
 
-	if len(viper.GetString("database.ip")) <= 0 {
-		return nil, errors.New("missing database.type")
+	if len(viper.GetString("database.host")) <= 0 {
+		return nil, errors.New("missing database.host")
 	}
-	config.DataBase.Ip = viper.GetString("database.ip")
+	config.DataBase.Host = viper.GetString("database.host")
 
 	if len(viper.GetString("database.port")) <= 0 {
-		return nil, errors.New("missing database.type")
+		return nil, errors.New("missing database.port")
 	}
 	config.DataBase.Port = viper.GetString("database.port")
 
@@ -69,6 +71,17 @@ func validateConfig() (*Config, error) {
 		return nil, errors.New("missing database.instance")
 	}
 	config.DataBase.Instance = viper.GetString("database.instance")
+
+	// http
+	if len(viper.GetString("http.addr")) <= 0 {
+		return nil, errors.New("missing http.addr")
+	}
+	config.Http.Addr = viper.GetString("http.addr")
+
+	if len(viper.GetString("http.context.timeout")) <= 0 {
+		return nil, errors.New("missing http.context.timeout")
+	}
+	config.Http.Context.Timeout = viper.GetInt("http.context.timeout")
 
 	return &config, nil
 }
