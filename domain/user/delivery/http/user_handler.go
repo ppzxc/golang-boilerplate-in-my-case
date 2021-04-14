@@ -3,7 +3,9 @@ package http
 import (
 	"github.com/ppzxc/golang-boilerplate-in-my-case/domain"
 	"github.com/ppzxc/golang-boilerplate-in-my-case/middleware"
+	errUtil "github.com/ppzxc/golang-boilerplate-in-my-case/util/err"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/go-playground/validator.v9"
 	"strconv"
 )
 import "github.com/gofiber/fiber/v2"
@@ -59,6 +61,15 @@ func hashPassword(password string) (string, error) {
 //	return true
 //}
 
+func isRequestValid(m *domain.User) error {
+	validate := validator.New()
+	err := validate.Struct(m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *UserHandler) GetByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -82,36 +93,44 @@ func (u *UserHandler) GetByID(c *fiber.Ctx) error {
 
 // CreateUser new user
 func (u *UserHandler) CreateUser(c *fiber.Ctx) error {
-	//type NewUser struct {
-	//	Username string `json:"username"`
-	//	Email    string `json:"email"`
-	//}
-	//
-	//db := database.DB
-	//user := new(model.User)
-	//if err := c.BodyParser(user); err != nil {
-	//	return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "data": err})
-	//
-	//}
-	//
-	//hash, err := hashPassword(user.Password)
-	//if err != nil {
-	//	return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't hash password", "data": err})
-	//
-	//}
-	//
-	//user.Password = hash
-	//if err := db.Create(&user).Error; err != nil {
-	//	return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't create user", "data": err})
-	//}
-	//
-	//newUser := NewUser{
-	//	Email:    user.Email,
-	//	Username: user.Username,
-	//}
+	user := new(domain.User)
+
+	// parse body
+	if err := c.BodyParser(user); err != nil {
+		//return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "data": err})
+		return errUtil.Result(c, errUtil.ERROR, fiber.StatusUnprocessableEntity, "review your input body", err.Error())
+	}
+
+	// validator.v9
+	if err := isRequestValid(user); err != nil {
+		return errUtil.Result(c, errUtil.ERROR, fiber.StatusUnprocessableEntity, "review your input body", err.Error())
+	}
+
+	hash, err := hashPassword(user.Password)
+	if err != nil {
+		return errUtil.Result(c, errUtil.ERROR, fiber.StatusInternalServerError, "Couldn't hash password", err.Error())
+		//return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't hash password", "data": err})
+	}
+
+	user.Password = hash
+	if err := u.UserUsecase.Store(c.Context(), user); err != nil {
+		return errUtil.Result(c, errUtil.ERROR, fiber.StatusInternalServerError, "Couldn't create user", err.Error())
+		//return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't create user", "data": err})
+	}
+
+	type NewUser struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+	}
+
+	newUser := NewUser{
+		Email:    user.Email,
+		Username: user.Username,
+	}
 
 	//return c.JSON(fiber.Map{"status": "success", "message": "Created user", "data": newUser})
-	return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "Created user", "data": "d"})
+	return errUtil.Result(c, errUtil.SUCCESS, fiber.StatusOK, "created user", newUser)
+	//return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "Created user", "data": newUser})
 }
 
 // UpdateUser update user

@@ -13,7 +13,7 @@ var (
 const ERROR = "error"
 const SUCCESS = "success"
 
-func Result(ctx *fiber.Ctx, status string, statusCode int, message string) error {
+func Result(ctx *fiber.Ctx, status string, statusCode int, message string, data interface{}) error {
 	//return fiber.Map{"status": status, "code": statusCode, "message": message, "data": nil}
-	return ctx.Status(statusCode).JSON(fiber.Map{"status": status, "code": statusCode, "message": message, "data": nil})
+	return ctx.Status(statusCode).JSON(fiber.Map{"status": status, "code": statusCode, "message": message, "data": data})
 }

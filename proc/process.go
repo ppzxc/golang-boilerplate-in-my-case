@@ -52,6 +52,8 @@ func Main(ctx context.Context, config *yml.Config) error {
 		}
 	}()
 
+	initTables(dbConn)
+
 	fiberConfig := fiber.Config{
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -116,5 +118,15 @@ func Main(ctx context.Context, config *yml.Config) error {
 			//		zap.String("config", fmt.Sprintf("%+v", config)))
 			//	time.Sleep(1 * time.Second)
 		}
+	}
+}
+
+func initTables(conn *sql.DB) {
+	if _, err := conn.Exec("DROP TABLE `users`"); err != nil {
+		zap.L().Error("table DELETE errors", zap.Error(err))
+	}
+
+	if _, err := conn.Exec(mariadb2.CreateUsers()); err != nil {
+		zap.L().Error("table Create Users errors", zap.Error(err))
 	}
 }

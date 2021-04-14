@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/ppzxc/golang-boilerplate-in-my-case/domain"
 	"go.uber.org/zap"
 )
@@ -100,7 +101,26 @@ func (m *mariadbUserRepository) Update(ctx context.Context, user *domain.User) e
 }
 
 func (m *mariadbUserRepository) Store(ctx context.Context, user *domain.User) error {
-	return nil
+	query := `INSERT INTO users (name, username, password, email, description, register_date, last_login_date) `
+	query += `VALUES (?, ?, ?, ?, ?, now(), now())`
+
+	result, err := m.Conn.ExecContext(ctx, query, user.Name, user.Username, user.Password, user.Email, user.Description)
+	if err != nil {
+		return err
+	}
+
+	insertCount, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if insertCount > 0 {
+		lastId, _ := result.LastInsertId()
+		user.ID = lastId
+		return nil
+	} else {
+		return errors.New("insert failed")
+	}
 }
 
 func (m *mariadbUserRepository) Delete(ctx context.Context, id int64) error {
