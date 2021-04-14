@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/ppzxc/golang-boilerplate-in-my-case/proc"
 	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/logger"
 	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/yml"
@@ -29,10 +30,30 @@ var (
 	//timeZone        = flag.String("tz", "Asia/Seoul", "set time zone")
 )
 
+// @title golang fiber boilerplate in my case
+// @version 0.0.1
+// @description This is boilerplate using fiber
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.email cjh8487@naver.com
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	// timezone
 	//_, _ = time.LoadLocation(*timeZone)
 	//_ = time.Now().In(loc)
+
+	//go func() {
+	//	app := fiber.New()
+	//	app.Get("/docs/*", swagger.Handler) // default
+	//	//app.Get("/docs/*", swagger.New(swagger.Config{ // custom
+	//	//	URL: "http://example.com/doc.json",
+	//	//	DeepLinking: false,
+	//	//}))
+	//	app.Listen(":8080")
+	//}()
 
 	// flags
 	flag.Parse()
