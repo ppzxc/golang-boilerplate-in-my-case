@@ -2,34 +2,34 @@ package http
 
 import (
 	"github.com/ppzxc/golang-boilerplate-in-my-case/domain"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/middleware"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 )
 import "github.com/gofiber/fiber/v2"
-
-type ResponseError struct {
-	Message string `json:"message"`
-}
 
 type UserHandler struct {
 	UserUsecase domain.UserUsecase
 }
 
-func NewUserHandler(f *fiber.App, uu domain.UserUsecase) {
+func NewUserHandler(r fiber.Router, uu domain.UserUsecase, secret string) {
 	handler := &UserHandler{
 		UserUsecase: uu,
 	}
 
-	f.Get("/users/:id", handler.GetByID)
-	f.Delete("/users/:id", handler.DeleteUser)
-	f.Post("/users/:id", handler.UpdateUser)
-	f.Post("/users", handler.CreateUser)
+	user := r.Group("/user")
+	user.Post("/", handler.CreateUser)
+
+	user.Get("/:id", middleware.Protected(secret), handler.GetByID)
+	user.Delete("/:id", middleware.Protected(secret), handler.DeleteUser)
+	user.Post("/:id", middleware.Protected(secret), handler.UpdateUser)
 }
 
-//func hashPassword(password string) (string, error) {
-//	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-//	return string(bytes), err
-//}
-//
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
 //func validToken(t *jwt.Token, id string) bool {
 //	n, err := strconv.Atoi(id)
 //	if err != nil {
@@ -45,7 +45,7 @@ func NewUserHandler(f *fiber.App, uu domain.UserUsecase) {
 //
 //	return true
 //}
-//
+
 //func validUser(id string, p string) bool {
 //	db := database.DB
 //	var user model.User
@@ -64,20 +64,20 @@ func (u *UserHandler) GetByID(c *fiber.Ctx) error {
 
 	// validation
 	if len(id) <= 0 {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "/user/:id parameter is invalid", "data": nil})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "code": fiber.StatusBadRequest, "message": "/user/:id parameter is invalid", "data": nil})
 	}
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "/user/:id parameter is invalid", "data": nil})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "code": fiber.StatusBadRequest, "message": "/user/:id parameter is invalid", "data": nil})
 	}
 
 	// get by id
 	byID, err := u.UserUsecase.GetByID(c.Context(), int64(intId))
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "/user/:id parameter is invalid", "data": nil})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "code": fiber.StatusBadRequest, "message": "/user/:id parameter is invalid", "data": nil})
 	}
-	return c.JSON(fiber.Map{"status": "success", "message": "Product found", "data": byID})
+	return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "Product found", "data": byID})
 }
 
 // CreateUser new user
@@ -111,7 +111,7 @@ func (u *UserHandler) CreateUser(c *fiber.Ctx) error {
 	//}
 
 	//return c.JSON(fiber.Map{"status": "success", "message": "Created user", "data": newUser})
-	return c.JSON(fiber.Map{"status": "success", "message": "Created user", "data": "d"})
+	return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "Created user", "data": "d"})
 }
 
 // UpdateUser update user
@@ -138,7 +138,7 @@ func (u *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	//db.Save(&user)
 
 	//return c.JSON(fiber.Map{"status": "success", "message": "User successfully updated", "data": user})
-	return c.JSON(fiber.Map{"status": "success", "message": "User successfully updated", "data": "d"})
+	return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "User successfully updated", "data": "d"})
 }
 
 // DeleteUser delete user
@@ -169,5 +169,5 @@ func (u *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	//db.First(&user, id)
 	//
 	//db.Delete(&user)
-	return c.JSON(fiber.Map{"status": "success", "message": "User successfully deleted", "data": nil})
+	return c.JSON(fiber.Map{"status": "success", "code": fiber.StatusOK, "message": "User successfully deleted", "data": nil})
 }

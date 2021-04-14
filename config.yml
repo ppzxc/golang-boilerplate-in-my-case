@@ -1,4 +1,6 @@
 http:
+  jwt:
+    secret: SECRET
   addr: :3000
   context:
     timeout: 10

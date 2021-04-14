@@ -15,10 +15,15 @@ type DataBase struct {
 }
 
 type Http struct {
+	Jwt     Jwt     `yml:"jwt"`
 	Addr    string  `yml:"addr"`
 	Context Context `yml:"context"`
 }
 
 type Context struct {
 	Timeout int `yml:"timeout"`
+}
+
+type Jwt struct {
+	Secret string `yml:"secret"`
 }

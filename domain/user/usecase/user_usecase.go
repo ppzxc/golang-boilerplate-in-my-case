@@ -30,6 +30,13 @@ func (u *userUsecase) GetByID(ctx context.Context, id int64) (res domain.User, e
 }
 
 func (u *userUsecase) GetByEmail(ctx context.Context, email string) (res domain.User, err error) {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
+	defer cancel()
+
+	if res, err = u.userRepo.GetByEmail(ctx, email); err != nil {
+		return
+	}
+
 	return
 }
 

@@ -7,9 +7,11 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/ppzxc/golang-boilerplate-in-my-case/user/delivery/http"
-	"github.com/ppzxc/golang-boilerplate-in-my-case/user/repository/mariadb"
-	"github.com/ppzxc/golang-boilerplate-in-my-case/user/usecase"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/ppzxc/golang-boilerplate-in-my-case/domain/auth/delivery/http"
+	http2 "github.com/ppzxc/golang-boilerplate-in-my-case/domain/user/delivery/http"
+	mariadb2 "github.com/ppzxc/golang-boilerplate-in-my-case/domain/user/repository/mariadb"
+	usecase2 "github.com/ppzxc/golang-boilerplate-in-my-case/domain/user/usecase"
 	"github.com/ppzxc/golang-boilerplate-in-my-case/util/config/yml"
 	custom "github.com/ppzxc/golang-boilerplate-in-my-case/util/err"
 	"go.uber.org/zap"
@@ -50,20 +52,37 @@ func Main(ctx context.Context, config *yml.Config) error {
 		}
 	}()
 
+	fiberConfig := fiber.Config{
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+
+			return ctx.Status(code).JSON(fiber.Map{"status": "error", "code": code, "message": err.Error(), "data": nil})
+		},
+	}
+
 	// fiber init
-	app := fiber.New()
+	app := fiber.New(fiberConfig)
+
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
+	api := app.Group("/api", logger.New())
+	v1 := api.Group("/v1")
+
 	// context timeout
 	timeoutContext := time.Duration(config.Http.Context.Timeout) * time.Second
 
 	// user init
-	ur := mariadb.NewMariadbUserRepository(dbConn)
-	uu := usecase.NewUserUsecase(ur, timeoutContext)
-	http.NewUserHandler(app, uu)
+	ur := mariadb2.NewMariadbUserRepository(dbConn)
+	uu := usecase2.NewUserUsecase(ur, timeoutContext)
+	http2.NewUserHandler(v1, uu, config.Http.Jwt.Secret)
+
+	http.NewAuthHandler(v1, uu, config.Http.Jwt.Secret)
 
 	// fiber run
 	go func() {
